@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orquestrador de Microserviços</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 400px; margin: 60px auto; background: #fff; padding: 32px 24px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+    h2 { text-align: center; color: #333; }
+    label { display: block; margin-top: 16px; color: #555; }
+    input, select { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; border: 1px solid #ccc; }
+    button { margin-top: 24px; width: 100%; padding: 10px; background: #0078d7; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #005fa3; }
+    .result { margin-top: 24px; text-align: center; font-size: 18px; color: #007800; }
+    .error { color: #c00; margin-top: 16px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Calculadora de Microserviços</h2>
+    <form id="calcForm">
+      <label for="operation">Operação:</label>
+      <select id="operation" name="operation">
+        <option value="add">Soma</option>
+        <option value="subtract">Subtração</option>
+        <option value="multiply">Multiplicação</option>
+        <option value="divide">Divisão</option>
+        <option value="power">Potência</option>
+        <option value="sqrt">Raiz Quadrada</option>
+        <option value="percentage">Porcentagem</option>
+        <option value="log">Logaritmo</option>
+        <option value="sin">Seno</option>
+        <option value="cos">Cosseno</option>
+      </select>
+      <label for="a">Valor A:</label>
+      <input type="number" id="a" name="a" required>
+      <label for="b">Valor B:</label>
+      <input type="number" id="b" name="b">
+      <button type="submit">Calcular</button>
+    </form>
+    <div class="result" id="result"></div>
+    <div class="error" id="error"></div>
+  </div>
+  <script>
+    const form = document.getElementById('calcForm');
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+    const bInput = document.getElementById('b');
+    const operationSelect = document.getElementById('operation');
+
+    function updateBField() {
+      if (operationSelect.value === 'sqrt') {
+        bInput.disabled = true;
+        bInput.value = '';
+      } else {
+        bInput.disabled = false;
+      }
+    }
+    operationSelect.addEventListener('change', updateBField);
+    updateBField();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultDiv.textContent = '';
+      errorDiv.textContent = '';
+      const operation = operationSelect.value;
+      const a = parseFloat(document.getElementById('a').value);
+      const b = parseFloat(bInput.value);
+      let params = {};
+      if (operation === 'sqrt') {
+        params = { number: a };
+      } else {
+        params = { a, b };
+      }
+      try {
+        const response = await fetch('/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ operation, params })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          resultDiv.textContent = 'Resultado: ' + (data.result ?? JSON.stringify(data));
+        } else {
+          errorDiv.textContent = data.error || 'Erro ao calcular.';
+        }
+      } catch (err) {
+        errorDiv.textContent = 'Erro de conexão com o servidor.';
+      }
+    });
+  </script>
+</body>
+</html>
